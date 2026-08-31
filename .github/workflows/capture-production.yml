@@ -1,24 +1,30 @@
 name: Capture Free Writing production
 on:
   pull_request:
+    paths:
+      - '.capture-trigger'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   capture:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
       - name: Fetch exact production files
         run: |
-          mkdir -p production
-          curl --fail --silent --show-error --location https://free-writing.vercel.app/ -o production/index.html
-          curl --fail --silent --show-error --location https://free-writing.vercel.app/style.css?v=12.5.8 -o production/style.css
-          curl --fail --silent --show-error --location https://free-writing.vercel.app/app.js?v=12.5.8 -o production/app.js
-          curl --fail --silent --show-error --location https://free-writing.vercel.app/apple-touch-icon.png -o production/apple-touch-icon.png
-          sha256sum production/*
-      - uses: actions/upload-artifact@v4
-        with:
-          name: free-writing-production-12.5.8
-          path: production/
-          if-no-files-found: error
-          retention-days: 30
+          mkdir -p production/current
+          curl --fail --silent --show-error --location https://free-writing.vercel.app/ -o production/current/index.html
+          curl --fail --silent --show-error --location 'https://free-writing.vercel.app/style.css?v=12.5.8' -o production/current/style.css
+          curl --fail --silent --show-error --location 'https://free-writing.vercel.app/app.js?v=12.5.8' -o production/current/app.js
+          curl --fail --silent --show-error --location https://free-writing.vercel.app/apple-touch-icon.png -o production/current/apple-touch-icon.png
+          sha256sum production/current/*
+      - name: Commit rollback snapshot to capture branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add production/current
+          git commit -m 'chore: snapshot production 12.5.8' || exit 0
+          git push origin HEAD:${{ github.head_ref }}
