@@ -1,0 +1,26 @@
+name: Capture Free Writing production
+on:
+  push:
+    paths:
+      - '.github/workflows/capture-production.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch exact production files
+        run: |
+          mkdir -p production
+          curl --fail --silent --show-error --location https://free-writing.vercel.app/ -o production/index.html
+          curl --fail --silent --show-error --location https://free-writing.vercel.app/style.css?v=12.5.8 -o production/style.css
+          curl --fail --silent --show-error --location https://free-writing.vercel.app/app.js?v=12.5.8 -o production/app.js
+          curl --fail --silent --show-error --location https://free-writing.vercel.app/apple-touch-icon.png -o production/apple-touch-icon.png
+          sha256sum production/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: free-writing-production-12.5.8
+          path: production/
+          if-no-files-found: error
+          retention-days: 30
