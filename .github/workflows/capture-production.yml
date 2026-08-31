@@ -1,8 +1,6 @@
 name: Capture Free Writing production
 on:
-  push:
-    paths:
-      - '.github/workflows/capture-production.yml'
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
