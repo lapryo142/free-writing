@@ -1,1 +1,1 @@
-capture production 12.5.8 exact rollback
+verify production 12.5.9 after direct deploy
